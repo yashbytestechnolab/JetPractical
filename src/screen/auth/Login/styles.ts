@@ -4,14 +4,14 @@ import { Colors } from "../../../constants/Colors";
 export const styles = StyleSheet.create({
     wrapperStyle: {
         flex: 1,
-        backgroundColor: Colors.whiteShadow
+        
     },
     loginPage: {
         backgroundColor: Colors.white,
-        flex: 1,
         marginHorizontal: 35,
         borderRadius: 16,
-        marginVertical: '20%',
+        height:'70%',
+        marginTop: 100
     },
     logoWrapper: {
         width: 80,

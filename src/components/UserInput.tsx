@@ -56,7 +56,7 @@ const inputStyles = StyleSheet.create({
   wrapper: {flexDirection: 'row'},
   icon: {height: 30, width: 30, alignSelf: 'center'},
   input: {flex: 1, paddingLeft: 12},
-  line: {height: 1, backgroundColor: Colors.midGrey, bottom: 6},
+  line: {height: 1, backgroundColor: Colors.midGrey, top: 8},
   tintColor: {tintColor: Colors.primary},
   focusBackground: {backgroundColor: Colors.primary},
 });
