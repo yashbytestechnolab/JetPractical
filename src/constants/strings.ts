@@ -3,5 +3,6 @@ export const strings = {
     favourite: "Favourite",
     login: "LOGIN",
     email: "Email",
-    password: "Password"
+    password: "Password",
+    noFavourite: 'No Favourite List'
 }

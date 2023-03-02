@@ -1,23 +1,35 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import {ROUTES} from './RoutesName/RoutesName';
 import {TabNavigation} from './TabNavigation';
 import Login from '../screen/auth/Login';
+import {AsyncStorageGetValue} from '../services/LocalStorage';
+import {LocalStorageKeys} from '../constants/LocakStorageKeys';
 
 const Stack = createStackNavigator();
 
 const MainStack = () => {
-  let useDetail = {};
+  const [userDetail, setUserDetail] = useState(false);
+
+  const onGetUserDetail = async () => {
+    const credential: any = await AsyncStorageGetValue(
+      LocalStorageKeys.credential,
+    );
+    setUserDetail(credential?.email || {});
+  };
+
+  useEffect(() => {
+    onGetUserDetail();
+  }, []);
+
   return (
     <>
-      {useDetail == undefined || useDetail == null ? (
+      {!userDetail ? (
         <></>
       ) : (
         <Stack.Navigator
           screenOptions={{headerShown: false}}
-          initialRouteName={
-            useDetail?.userID ? ROUTES.TabGroup : ROUTES.TabGroup
-          }>
+          initialRouteName={userDetail?.email ? ROUTES.TabGroup : ROUTES.Login}>
           <Stack.Screen
             name={ROUTES.Login}
             component={Login}

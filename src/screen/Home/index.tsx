@@ -1,136 +1,206 @@
 import React, {useEffect} from 'react';
-import {View, Text, FlatList, SafeAreaView, Image, TouchableOpacity} from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  SafeAreaView,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {getData} from '../../redux/reducer/user';
+import {getData, onUpdateFavourite} from '../../redux/reducer/user';
 import {icon} from '../../assets/icons';
 import {Colors} from '../../constants/Colors';
+import {Header} from '../../components';
+import {AsyncStorageSetValue} from '../../services/LocalStorage';
+import {LocalStorageKeys} from '../../constants/LocakStorageKeys';
+import {styles} from './styles';
+import {details, myData} from './interface';
 
-const user = [
-  {
-    name: 'Ali',
-    hobby: {hobby1: 'Cricket', hobby2: 'hikinng'},
-    location: 'India',
-    isFaviourate: false,
-  },
-  {
-    name: 'Ali',
-    hobby: {hobby1: 'Cricket', hobby2: 'hikinng'},
-    location: 'India',
-    isFaviourate: false,
-  },
-  {
-    name: 'Ali',
-    hobby: {hobby1: 'Cricket', hobby2: 'hikinng'},
-    location: 'India',
-    isFaviourate: false,
-  },
-  {
-    name: 'Ali',
-    hobby: {hobby1: 'Cricket', hobby2: 'hikinng'},
-    location: 'India',
-    isFaviourate: false,
-  },
-];
-
-interface myData {
-  data: {results: Array<object>} | object;
-  loading: boolean;
-}
 const Home = () => {
   const dispatch = useDispatch();
+
   const myData: myData = useSelector(
-    (state: {user: {data: object; loading: boolean}}) => {
+    (state: {user: {data: object; loading: boolean; refreshing: boolean}}) => {
       return state?.user;
     },
   );
-  console.log('myData', myData?.data?.results);
 
+  const favouriteList = useSelector(
+    (state: {user: {faviourateList: Array<object>}}) => {
+      return state?.user?.faviourateList;
+    },
+  );
+  /**
+   * Detail for which page we are currently
+   */
+  let details: details = {
+    page: 0,
+    result: 10,
+    myData: myData?.data?.results,
+    refreshing: false,
+  };
+
+  /**
+   * TO get user list
+   */
+  const onLoadDataList = () => {
+    dispatch(getData(details));
+  };
+
+  /**
+   * TO get user list
+   */
   useEffect(() => {
-    dispatch(getData());
+    onLoadDataList();
   }, []);
 
-  const renderData = ({item}: object | any) => {
-    console.log('item', item);
-    // picture?.medium;
-    return (
-      <View
-        style={{
-          marginVertical: 6,
-          height: 90,
-          marginRight: '5%',
-          marginLeft: '8%',
-          borderRadius: 13,
-          backgroundColor: 'white',
-          elevation: 1,
-          //   justifyContent: 'space-evenly',
-          justifyContent: 'center',
-          alignItems: 'center',
-          flexDirection: 'row',
-        }}>
-        <View
-          style={{
-            left: -16,
-          }}>
-          <Image
-            source={{uri: item?.picture.medium}}
-            style={{width: 60, height: 60, borderRadius: 30}}
-          />
-        </View>
-        <View style={{justifyContent: 'space-around'}}>
-          <Text style={{fontSize: 22, fontWeight: '600', color: 'black'}}>
-            {item?.name?.first}
-          </Text>
-          <View style={{flexDirection: 'row', justifyContent: 'center'}}>
+  /**
+   * on click to add favourite and remove favourite
+   * @param id number
+   * @param isFavourite flag for favourite user
+   */
+  const onSetFavourite = (id: number, isFavourite: boolean) => {
+    let {results}: any = myData?.data;
 
-          <Image
-            source={icon.location}
-            style={{
-              width: 15,
-              height: 20,
-              alignSelf: 'center'
-            }}
-            resizeMode={'contain'}
-          />
-            <Text style={{fontSize: 13, paddingVertical: 5, paddingLeft: 4}}>{item?.location?.country+ ','}</Text>
-            <Text style={{fontSize: 13, left: 3, paddingVertical: 5}}>
-              {item?.location?.country}
-            </Text>
+    let addFavouriteUser = {...results[id], isFavourite: !isFavourite};
+
+    const onFavouriteAdd = results?.map((item: any, index: number) => {
+      return index == id ? {...item, isFavourite: !isFavourite} : item;
+    });
+
+    let filterFavouriteList: Array<object> = [];
+    if (isFavourite) {
+      filterFavouriteList = favouriteList?.filter((favouriteRes: any) => {
+        return favouriteRes?.email !== addFavouriteUser?.email;
+      });
+    } else {
+      filterFavouriteList = [...favouriteList, addFavouriteUser];
+    }
+
+    let payload = {
+      listOfUser: {
+        ...myData,
+        ['data']: {...myData.data, results: onFavouriteAdd},
+      },
+      favouriteListOfUser: filterFavouriteList,
+    };
+
+    dispatch(onUpdateFavourite(payload));
+
+    AsyncStorageSetValue(
+      LocalStorageKeys.favourite,
+      JSON.stringify(payload.favouriteListOfUser),
+    );
+  };
+
+  /**
+   * pagenation
+   * @param distanceFromEnd to endscroll distance
+   */
+  const onEnd = () => {
+    details['page'] = myData?.data?.info.page + 1;
+    dispatch(getData(details));
+  };
+
+  /**
+   * user list render
+   * @param param userDetail
+   * @returns
+   */
+  const renderData = ({item, index}: object | any | number) => {
+    return (
+      <View key={item?.phone} style={styles.mainWrapperList}>
+        <View style={styles.imageWrapper}>
+          <Image source={{uri: item?.picture.medium}} style={styles.image} />
+        </View>
+        <View style={styles.detailWrapper}>
+          <Text style={styles.firstName}>{item?.name?.first}</Text>
+          <View style={styles.locationWrapper}>
+            <Image
+              source={icon.location}
+              style={styles.location}
+              resizeMode={'contain'}
+            />
+            <Text style={styles.country}>{item?.location?.country + ','}</Text>
+            <Text style={styles.city}>{item?.location?.country}</Text>
           </View>
-          {/* <Text style={{fontSize: 10}}>{item?.name}</Text> */}
+          <View style={{flexDirection: 'row'}}>
+            {Object.values(item?.hobbies).map((hobbies: any) => {
+              return <RenderHobby hobbies={hobbies} />;
+            })}
+          </View>
         </View>
         <TouchableOpacity
-          style={{
-            flex: 1,
-            alignItems: 'flex-end',
-            justifyContent: 'flex-end',
-          }}>
+          activeOpacity={0.7}
+          onPress={() => onSetFavourite(index, item?.isFavourite)}
+          style={styles.favouriteIconWrapper}>
           <Image
-            source={icon.favourite}
-            style={{
-              position: 'absolute',
-              right: 15,
-              width: 20,
-              height: 20,
-              top: -25,
-            }}
+            source={item?.isFavourite ? icon.favouriteFocused : icon.favourite}
+            style={styles.favouriteIcon}
           />
         </TouchableOpacity>
       </View>
     );
   };
 
+  /**
+   * Render hobby list
+   * @param param hobbies like music trave etc.
+   * @returns
+   */
+  const RenderHobby = ({hobbies}: any) => {
+    return (
+      <View
+        style={[styles.hobbyWrapper, {backgroundColor: hobbies?.backColor}]}>
+        <Text style={{color: hobbies?.color, fontSize: 12}}>
+          {hobbies?.name}
+        </Text>
+      </View>
+    );
+  };
+
   return (
-    <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
-      <View style={{flex: 0.1, justifyContent: 'center', alignItems: 'center'}}>
-        <Image source={icon.logo} style={{width: 45, height: 45}} />
-      </View>
-      <View style={{flex: 0.9, backgroundColor: Colors.whiteShadow}}>
-        <FlatList
-          style={{marginTop: 6, marginBottom: 60}}
-          data={myData?.data?.results}
-          renderItem={renderData}
-        />
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <Header />
+      {myData?.loading && myData?.data?.results == undefined ? (
+        <View style={styles.loaderWrapper}>
+          <ActivityIndicator color={Colors.primary} size={40} />
+        </View>
+      ) : (
+        <View style={styles.container}>
+          <FlatList
+            keyExtractor={(item: any, index: number) => index.toString()}
+            style={styles.list}
+            data={myData?.data?.results}
+            renderItem={renderData}
+            ListFooterComponent={() => {
+              return (
+                <View style={styles.footerWrapper}>
+                  {myData?.loading && myData?.data?.results && (
+                    <ActivityIndicator color={Colors.primary} size={40} />
+                  )}
+                </View>
+              );
+            }}
+            refreshControl={
+              <RefreshControl
+                refreshing={myData?.refreshing}
+                onRefresh={() => {
+                  details['refreshing'] = true;
+                  onLoadDataList();
+                }}
+                colors={[Colors.primary]}
+                tintColor={Colors.primary}
+              />
+            }
+            onEndReached={({distanceFromEnd}) => onEnd(distanceFromEnd)}
+            onEndReachedThreshold={0.4}
+          />
+        </View>
+      )}
     </SafeAreaView>
   );
 };

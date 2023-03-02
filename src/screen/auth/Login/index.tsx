@@ -10,6 +10,9 @@ import {emailPattern} from './regex';
 import {emailCredential, passwordCredential} from './credential';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {ROUTES} from '../../../routes/RoutesName/RoutesName';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {AsyncStorageSetValue} from '../../../services/LocalStorage';
+import {LocalStorageKeys} from '../../../constants/LocakStorageKeys';
 
 const Login = () => {
   const navigation: NavigationProp<ReactNavigation.RootParamList> =
@@ -28,6 +31,7 @@ const Login = () => {
     if (email !== emailCredential || password !== passwordCredential) {
       Alert.alert('Please Enter Valid Email And Password');
     } else {
+      AsyncStorageSetValue(LocalStorageKeys.credential, {email});
       navigation.reset({
         index: 1,
         routes: [{name: ROUTES.TabGroup}],
@@ -61,10 +65,11 @@ const Login = () => {
               focus={password?.length > 0}
               onChangeText={(text: any) => setPassword(text)}
               wrapperStyle={{marginTop: 15}}
+              secureTextEntry
               iconStyle={{height: 25, width: 25}}
             />
-          </View>
-          <View style={styles.buttonWrapper}>
+
+<View style={styles.buttonWrapper}>
             <TouchableOpacity
               disabled={disableButton()}
               onPress={() => onHandleLogin()}
@@ -78,6 +83,9 @@ const Login = () => {
               <Text style={styles.buttonText}>{strings.login}</Text>
             </TouchableOpacity>
           </View>
+          
+          </View>
+       
         </View>
       </View>
     </>

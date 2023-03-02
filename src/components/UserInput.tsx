@@ -18,6 +18,7 @@ interface textInput {
   icon: any;
   placeholder: string;
   focus?: boolean;
+  secureTextEntry?: boolean;
 }
 
 export const UserInput = (props: textInput) => {
@@ -29,6 +30,7 @@ export const UserInput = (props: textInput) => {
     iconStyle,
     placeholder,
     focus,
+    secureTextEntry
   } = props;
   return (
     <>
@@ -42,6 +44,7 @@ export const UserInput = (props: textInput) => {
           style={inputStyles.input}
           value={value}
           onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry}
         />
       </View>
       <View style={[inputStyles.line, focus && inputStyles.focusBackground]} />
